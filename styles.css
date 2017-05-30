@@ -27,11 +27,6 @@ body {
 }
 
 
-.section:first-child {
-    margin-left: 0;
-}
-
-
 .title {
     color: #d65d0e;
     margin-bottom: 0;
