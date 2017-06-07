@@ -1,12 +1,17 @@
 #!/usr/bin/env node
 
-const fs = require('mz/fs')
+const fs = require('fs')
+const { promisify } = require('util')
 const chalk = require('chalk')
 const path = require('path')
+
 const bookmarkFilePath = process.platform === 'win32'
     ? path.join(process.env['USERPROFILE'], 'AppData\Local\Google\Chrome\User Data\Default\Bookmarks')
     : path.join(process.env['HOME'], '/Library/Application Support/Google/Chrome/Default/Bookmarks')
 const templates = require('./templates')
+
+const readFile = promisify(fs.readFile)
+const writeFile = promisify(fs.writeFile)
 
 const formatLinks = link => {
     return templates.link({
@@ -26,18 +31,18 @@ const formatSection = section => {
 
 const getSectionsHtml = parsed => {
     return parsed.roots.bookmark_bar.children
-        .filter(item => item.name)
+        .filter(item => item.name && item.children && item.children.length > 0)
         .map(formatSection)
         .join('')
 }
 
 async function main () {
-    const raw = await fs.readFile(bookmarkFilePath, 'utf8')
+    const raw = await readFile(bookmarkFilePath, 'utf8')
     const parsed = JSON.parse(raw)
     const sections = getSectionsHtml(parsed)
     const html = templates.html({sections})
 
-    await fs.writeFile(path.resolve(__dirname, 'index.html'), html)
+    await writeFile(path.resolve(__dirname, 'index.html'), html)
     console.log(chalk.green('./index.html written'))
 }
 
